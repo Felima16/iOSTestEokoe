@@ -14,7 +14,7 @@ class HomeViewController: UIViewController {
     @IBOutlet weak var indActivity: UIActivityIndicatorView!
     
     var users:Users = Users()
-    
+    var start = 1
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,11 +23,15 @@ class HomeViewController: UIViewController {
     
     private func loadUsers(){
         indActivity.startAnimating()
+        UIApplication.shared.beginIgnoringInteractionEvents()
         
-        API.get(Users.self, endpoint: .users, success: { (users) in
-            self.users = users
-           
+        start += API.page * 20
+        
+        API.get(Users.self, endpoint: .users(start), success: { (users) in
+            self.users.results.append(contentsOf: users.results)
+            API.page += 1
             DispatchQueue.main.async {
+                UIApplication.shared.endIgnoringInteractionEvents()
                 self.indActivity.stopAnimating()
                 self.userTableView.reloadData()
             }
@@ -36,12 +40,17 @@ class HomeViewController: UIViewController {
         }
     }
 
-
 }
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource{
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.users.results.count
+    }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if indexPath.row == (users.results.count - 1){
+            loadUsers()
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

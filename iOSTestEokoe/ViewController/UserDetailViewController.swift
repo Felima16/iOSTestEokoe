@@ -8,7 +8,7 @@
 
 import UIKit
 
-class UserDetailViewController: UIViewController {
+class UserDetailViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     @IBOutlet weak var bgImageView: UIImageView!
     @IBOutlet weak var userImageView: UIImageView!
@@ -19,7 +19,11 @@ class UserDetailViewController: UIViewController {
     @IBOutlet weak var sendButton: UIButton!
     
     @IBAction func sendActionButton(_ sender: Any) {
-
+        let myPickerController = UIImagePickerController()
+        myPickerController.delegate = self;
+        myPickerController.sourceType = UIImagePickerControllerSourceType.photoLibrary
+        
+        self.present(myPickerController, animated: true, completion: nil)
     }
 
     @IBAction func backActionButton(_ sender: Any) {
@@ -44,6 +48,24 @@ class UserDetailViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         self.navigationController?.isNavigationBarHidden = false
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+        bgImageView.image = info[UIImagePickerControllerOriginalImage] as? UIImage
+        self.dismiss(animated: true) {
+            print("nada")
+        }
+        
+        API.post(image: self.userImageView.image!, endpoint: .upload, success: { (msg) in
+            print(msg)
+            let alert = UIAlertController(title: "Enviado", message: msg, preferredStyle: .alert)
+            let ok = UIAlertAction(title: "ok", style: .cancel, handler: nil)
+            alert.addAction(ok)
+            
+            self.present(alert, animated: true, completion: nil)
+        }, fail: { (error) in
+            print("erro no upload \(error.localizedDescription)")
+        })
     }
     
     
@@ -71,5 +93,5 @@ class UserDetailViewController: UIViewController {
         }
         
     }
-
 }
+
